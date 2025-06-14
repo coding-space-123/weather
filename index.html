@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather App</title>
+   <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+            integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+            crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #081b29, #0a2a43);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .weather-card {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 350px;
+      width: 100%;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      border: 1px solid #0ff;
+      box-shadow:
+        0 0 15px #0ff;
+        /* 0 0 30px #0ff,
+        0 0 45px #0ff; */
+      transition: all 0.3s ease-in-out;
+    }
+
+    .weather-card:hover {
+      box-shadow:
+        1px 1px 20px #012290f7,
+        1px 1px 40px #0056b3;
+    }
+
+    .weather-card h1 {
+      font-size: 1.6rem;
+      margin-bottom: 15px;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      padding: 10px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+      transition: 0.3s ease;
+    }
+
+    input {
+      background: #000c18;
+      color: #0ff;
+      border: 1px solid #0ff;
+      box-shadow: 0 0 10px #0ff;
+    }
+
+    input::placeholder {
+      color: #0ff9;
+    }
+
+    input:hover {
+      box-shadow: 0 0 15px #0ff;
+    }
+
+    button {
+      background: #000c18;
+      color: #0ff;
+      border: 1px solid #0ff;
+      cursor: pointer;
+      box-shadow: 0 0 10px #0ff;
+    }
+
+    button:hover {
+      background: #0ff;
+      color: #000;
+      box-shadow: 0 0 15px #0ff, 0 0 30px #0ff;
+    }
+
+    .temp {
+      font-size: 3rem;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff;
+    }
+
+    .condition {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+
+    .icon {
+      width: 80px;
+      margin: 10px 0;
+      filter: drop-shadow(0 0 8px #0ff);
+    }
+
+    .info {
+      font-size: 0.9rem;
+      margin-top: 10px;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="weather-card">
+    <h1><i class="fa-solid fa-cloud" style="color:#0ef"> &nbsp;</i>Weather App</h1>
+    <div class="input-group">
+      <input type="text" id="cityInput" placeholder="Enter city name..." />
+      <button onclick="getWeather()">Get Weather</button>
+      <button onclick="resetWeather()">Reset</button>
+    </div>
+    <div id="weatherDisplay">
+      <!-- Weather data will show here -->
+    </div>
+  </div>
+
+  <script>
+  const apiKey = "69c9b9d7949d4c4f91093202250906";
+  let timeInterval;
+
+  async function getWeather() {
+    const city = document.getElementById("cityInput").value;
+    if (!city) return;
+
+    const res = await fetch(`http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=yes`);
+    const data = await res.json();
+
+    if (data.error) {
+      document.getElementById("weatherDisplay").innerHTML = `<p style="color:red;">City not found!</p>`;
+      clearInterval(timeInterval);
+      return;
+    }
+
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = now.toLocaleDateString('en-GB', options);
+
+    // Display initial layout
+    document.getElementById("weatherDisplay").innerHTML = `
+      <img src="https:${data.current.condition.icon}" alt="icon" class="icon" />
+      <div class="temp">${data.current.temp_c}°C</div>
+      <div class="condition">${data.current.condition.text}</div>
+      <div class="info">
+        <p>Humidity: ${data.current.humidity}%</p>
+        <p>Wind: ${data.current.wind_kph} km/h</p>
+        <p>Date: ${formattedDate}</p>
+        <p id="liveTime">Time: --:--:--</p>
+      </div>
+    `;
+
+    // Clear previous interval if exists
+    clearInterval(timeInterval);
+
+    // Start live time updater
+    timeInterval = setInterval(() => {
+      const timeNow = new Date();
+      const formattedTime = timeNow.toLocaleTimeString('en-GB');
+      document.getElementById("liveTime").innerText = `Time: ${formattedTime}`;
+    }, 1000);
+  }
+
+  function resetWeather() {
+    document.getElementById("cityInput").value = '';
+    document.getElementById("weatherDisplay").innerHTML = '';
+    clearInterval(timeInterval); // Stop clock
+  }
+</script>
+
+</body>
+</html>
